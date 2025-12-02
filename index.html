@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Qahwah: The Last Drop</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Lato:wght@400;900&display=swap');
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #3E2723;
+      font-family: 'Lato', sans-serif;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* UI Layer */
+    #ui-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Coffee Meter */
+    #meter-container {
+      margin-top: 20px;
+      width: 300px;
+      height: 30px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 3px solid #8D6E63;
+      border-radius: 15px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    #meter-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #6D4C41, #8D6E63);
+      transform-origin: left;
+      transition: width 0.1s linear;
+    }
+
+    #meter-label {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      top: 4px;
+      font-size: 0.9rem;
+      color: #fff;
+      text-shadow: 1px 1px 2px #000;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    #score-display {
+      font-family: 'Cinzel', serif;
+      font-size: 2rem;
+      color: #FFD700;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      margin-top: 10px;
+    }
+
+    /* Screens */
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(30, 20, 15, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      z-index: 100;
+      transition: opacity 0.2s;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    h1 {
+      font-family: 'Cinzel', serif;
+      color: #FFD700;
+      font-size: 2.5rem;
+      margin: 0 0 10px 0;
+      text-shadow: 0 0 20px #E65100;
+    }
+
+    p {
+      color: #F5DEB3;
+      font-size: 1.1rem;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    button {
+      background: linear-gradient(#E65100, #BF360C);
+      border: 2px solid #FFD700;
+      color: white;
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      font-family: 'Cinzel', serif;
+      margin-top: 30px;
+      cursor: pointer;
+      border-radius: 50px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      transition: transform 0.1s;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .secondary-btn {
+      background: transparent;
+      border: 2px solid #8D6E63;
+      color: #8D6E63;
+      margin-top: 15px;
+      font-size: 1rem;
+      padding: 10px 30px;
+    }
+
+    .tutorial-icon {
+      font-size: 3rem;
+      margin: 15px;
+    }
+
+    .warn-text {
+      color: #FF5252;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+      <div id="meter-container">
+        <div id="meter-fill"></div>
+        <div id="meter-label">QAHWAH LEVEL</div>
+      </div>
+      <div id="score-display">0.00s</div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+      <h1>QAHWAH: THE LAST DROP</h1>
+      <p>Every drop of this coffee is precious.</p>
+      <p>Keep the Dallah in the <span style="color:#FFD700">GOLD SAFE ZONE</span>.</p>
+      <p>If it slides out, the Qahwah spills!</p>
+      <div class="tutorial-icon">⚖️</div>
+      <p style="font-size: 0.9rem; color: #888;">Mouse / Drag / Tilt to Balance</p>
+      <button onclick="Game.start()">Protect the Pour</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen hidden">
+      <h1 style="color:#BCAAA4">NOT A DROP LEFT!</h1>
+      <p>You saved the Qahwah for:</p>
+      <h2 id="final-time" style="font-size: 3.5rem; color: #fff; margin: 10px 0;">0.00</h2>
+      <p>seconds</p>
+      <button onclick="Game.start()">Brew Again</button>
+      <button class="secondary-btn" onclick="Game.share()">Share Score</button>
+    </div>
+  </div>
+
+  <script>
+    const Game = {
+      canvas: document.getElementById('gameCanvas'),
+      ctx: document.getElementById('gameCanvas').getContext('2d'),
+      width: 0,
+      height: 0,
+      dpr: 1, // Device Pixel Ratio
+      animationId: null,
+      state: 'START',
+
+      // Game Stats
+      startTime: 0,
+      elapsedTime: 0,
+      coffeeLevel: 100, // 0 to 100
+
+      // Physics
+      trayAngle: 0,
+      inputAngle: 0,
+      intensity: 0,
+
+      // Objects
+      pot: { x: 0, velocity: 0, width: 60, height: 90 },
+      particles: [], // For spill effect
+
+      init: function () {
+        // Handle High DPI
+        this.dpr = window.devicePixelRatio || 1;
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        // Mouse Input
+        window.addEventListener('mousemove', e => this.handleInput(e.clientX));
+
+        // Touch Input
+        window.addEventListener('touchmove', e => {
+          e.preventDefault();
+          this.handleInput(e.touches[0].clientX);
+        }, { passive: false });
+
+        // Gyro (Optional)
+        window.addEventListener('deviceorientation', e => {
+          if (e.gamma && this.state === 'PLAYING') {
+            let tilt = Math.max(-45, Math.min(45, e.gamma));
+            this.inputAngle = tilt * (Math.PI / 180);
+          }
+        });
+
+        // Start the render loop immediately (for background)
+        this.loop();
+      },
+
+      resize: function () {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+
+        // Fix blurriness on Retina screens
+        this.canvas.width = this.width * this.dpr;
+        this.canvas.height = this.height * this.dpr;
+        this.ctx.scale(this.dpr, this.dpr);
+      },
+
+      handleInput: function (clientX) {
+        if (this.state !== 'PLAYING') return;
+
+        const center = this.width / 2;
+        // Determine screen side (-1 left, 1 right)
+        const percent = (clientX - center) / (this.width / 2);
+
+        // Control Scheme: Direct Tilt
+        // Max tilt = 35 degrees
+        this.inputAngle = percent * (35 * Math.PI / 180);
+      },
+
+      start: function () {
+        this.state = 'PLAYING';
+        this.startTime = Date.now();
+        this.coffeeLevel = 100;
+        this.particles = [];
+        this.pot.x = 0;
+        this.pot.velocity = 0;
+        this.inputAngle = 0;
+        this.intensity = 0;
+
+        // UI Reset
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-over-screen').classList.add('hidden');
+        document.getElementById('meter-fill').style.width = '100%';
+        document.getElementById('score-display').innerText = "0.00s";
+      },
+
+      gameOver: function () {
+        this.state = 'GAMEOVER';
+        document.getElementById('game-over-screen').classList.remove('hidden');
+        document.getElementById('final-time').innerText = this.elapsedTime;
+      },
+
+      loop: function () {
+        requestAnimationFrame(() => this.loop());
+
+        // Always draw background
+        this.draw();
+
+        if (this.state === 'PLAYING') {
+          this.update();
+        }
+      },
+
+      update: function () {
+        const now = Date.now();
+        const dt = 0.016; // Fixed step
+
+        // 1. Time & Difficulty
+        this.elapsedTime = ((now - this.startTime) / 1000).toFixed(2);
+        document.getElementById('score-display').innerText = this.elapsedTime + "s";
+
+        // Intensity ramps up over 60 seconds
+        this.intensity = Math.min(1.0, (now - this.startTime) / 60000);
+
+        // 2. Physics (Mountain Road Bumps)
+        const t = now / 1000;
+        // Noise function for ground shake
+        const shake = Math.sin(t * 5) + Math.sin(t * 11) * 0.5;
+        // Occasional "Jolt" (Pothole)
+        const jolt = (Math.random() < 0.01) ? (Math.random() - 0.5) * 4 : 0;
+
+        const groundTilt = (shake * 0.2 + jolt) * (0.2 + this.intensity * 1.5);
+
+        // 3. Tray Physics
+        // We lag the tray angle slightly behind input for "weight" feel
+        const targetAngle = this.inputAngle + groundTilt;
+        this.trayAngle += (targetAngle - this.trayAngle) * 0.1;
+
+        // 4. Pot Physics
+        // Gravity pulling pot down slope
+        const gravity = 4000;
+        const slideForce = Math.sin(this.trayAngle) * gravity;
+
+        this.pot.velocity += slideForce * dt;
+
+        // Sliding Friction
+        this.pot.velocity *= 0.95;
+
+        this.pot.x += this.pot.velocity * dt;
+
+        // 5. Spilling Logic (The new mechanic)
+        const safeZoneRadius = 60; // Pixels from center
+        const spillThreshold = 10; // Extra buffer
+
+        if (Math.abs(this.pot.x) > safeZoneRadius + spillThreshold) {
+          // We are outside safe zone!
+          // Calculate how far out
+          const overflow = Math.abs(this.pot.x) - safeZoneRadius;
+          const drainRate = 0.1 + (overflow * 0.005); // Faster drain if further out
+
+          this.coffeeLevel -= drainRate;
+          if (this.coffeeLevel < 0) this.coffeeLevel = 0;
+
+          // Spawn Particles
+          if (Math.random() > 0.5) {
+            this.spawnParticle(this.pot.x, -40);
+          }
+        }
+
+        // UI Update
+        document.getElementById('meter-fill').style.width = this.coffeeLevel + '%';
+        if (this.coffeeLevel < 30) {
+          document.getElementById('meter-fill').style.backgroundColor = '#FF5252';
+        } else {
+          document.getElementById('meter-fill').style.backgroundColor = '#6D4C41';
+        }
+
+        // Check Game Over
+        if (this.coffeeLevel <= 0) {
+          this.gameOver();
+        }
+
+        // Bounds Check (Hard limit)
+        const limit = (this.width * 0.8 / 2) - 30;
+        if (Math.abs(this.pot.x) > limit) {
+          this.pot.velocity = -this.pot.velocity * 0.5; // Bounce
+          this.pot.x = Math.sign(this.pot.x) * limit;
+          // Massive spill on impact
+          this.coffeeLevel -= 5;
+          for (let i = 0; i < 10; i++) this.spawnParticle(this.pot.x, -40);
+        }
+
+        // Update Particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          let p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.5; // Gravity
+          p.life--;
+          if (p.life <= 0) this.particles.splice(i, 1);
+        }
+      },
+
+      spawnParticle: function (x, y) {
+        this.particles.push({
+          x: x + (Math.random() - 0.5) * 40,
+          y: y,
+          vx: this.pot.velocity * 0.01 + (Math.random() - 0.5) * 5,
+          vy: -Math.random() * 5 - 2,
+          life: 40,
+          size: Math.random() * 4 + 2
+        });
+      },
+
+      draw: function () {
+        const w = this.width;
+        const h = this.height;
+        const ctx = this.ctx;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // --- Background ---
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        // Rotate background slightly opposite to tray for dizziness effect
+        ctx.rotate(-this.trayAngle * 0.2);
+
+        // Sky
+        const grad = ctx.createLinearGradient(0, -h, 0, h);
+        grad.addColorStop(0, '#1a237e');
+        grad.addColorStop(1, '#4a148c');
+        ctx.fillStyle = grad;
+        ctx.fillRect(-w, -h, w * 2, h * 2);
+
+        // Stars
+        ctx.fillStyle = '#FFF';
+        for (let i = 0; i < 10; i++) {
+          ctx.beginPath(); // Simple stars logic would go here, skipping for perf
+        }
+
+        // Mountains
+        ctx.fillStyle = '#151515';
+        ctx.beginPath();
+        ctx.moveTo(-w, h * 0.1);
+        ctx.lineTo(-w * 0.4, -h * 0.1);
+        ctx.lineTo(0, h * 0.2);
+        ctx.lineTo(w * 0.4, 0);
+        ctx.lineTo(w, h * 0.2);
+        ctx.lineTo(w, h);
+        ctx.lineTo(-w, h);
+        ctx.fill();
+        ctx.restore();
+
+        // --- The Tray ---
+        ctx.save();
+        ctx.translate(w / 2, h / 2 + 100);
+        ctx.rotate(this.trayAngle);
+
+        const trayW = Math.min(600, w * 0.85);
+        const safeW = 120; // Width of safe zone
+
+        // Tray Body
+        ctx.fillStyle = '#8D6E63';
+        ctx.fillRect(-trayW / 2, -5, trayW, 15);
+
+        // Safe Zone Marker (Center)
+        // If sliding out, turn red, else gold
+        const isSafe = Math.abs(this.pot.x) <= 70; // 60 + buffer
+        ctx.fillStyle = isSafe ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 0, 0, 0.2)';
+        ctx.fillRect(-safeW / 2, -15, safeW, 25);
+
+        ctx.strokeStyle = isSafe ? '#FFD700' : '#FF5252';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-safeW / 2, -15, safeW, 25);
+
+        // --- The Pot ---
+        ctx.translate(this.pot.x, -5);
+
+        // Draw Particles (Behind pot)
+        ctx.fillStyle = '#4E342E'; // Liquid color
+        for (let p of this.particles) {
+          ctx.beginPath();
+          ctx.arc(p.x - this.pot.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Pot Style
+        const potColor = '#FFC107';
+
+        // Pot Fluid Level (Visual)
+        // We mask the fluid inside the pot shape
+        ctx.save();
+
+        // Define Pot Shape for Clipping
+        ctx.beginPath();
+        ctx.arc(0, -35, 35, 0, Math.PI * 2); // Bulb
+        ctx.rect(-15, -90, 30, 60); // Neck
+
+        ctx.clip(); // Restrict drawing to inside pot
+
+        // Pot Background (Inside)
+        ctx.fillStyle = '#FDD835';
+        ctx.fill();
+
+        // Coffee Liquid
+        const liquidH = 100 * (this.coffeeLevel / 100); // 0 to 100
+        const liquidY = -90 + (100 - liquidH); // Top down
+
+        ctx.fillStyle = '#3E2723'; // Dark Coffee
+
+        // Sloshing Liquid Angle (opposes acceleration/tilt)
+        ctx.rotate(-this.trayAngle * 1.5);
+        ctx.fillRect(-50, liquidY, 100, 150);
+
+        ctx.restore(); // End clipping
+
+        // Draw Pot Outline (Over liquid)
+        ctx.strokeStyle = '#F9A825';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(0, -35, 35, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeRect(-15, -90, 30, 60);
+
+        // Spout
+        ctx.fillStyle = potColor;
+        ctx.beginPath();
+        ctx.moveTo(15, -50);
+        ctx.quadraticCurveTo(50, -60, 40, -80);
+        ctx.lineTo(30, -70);
+        ctx.fill();
+
+        // Lid
+        ctx.beginPath();
+        ctx.moveTo(-18, -90);
+        ctx.lineTo(0, -115);
+        ctx.lineTo(18, -90);
+        ctx.fill();
+
+        ctx.restore();
+      },
+
+      share: function () {
+        const text = `I saved the Qahwah for ${this.elapsedTime} seconds! ☕🇾🇪 Can you protect the last drop?`;
+        if (navigator.share) {
+          navigator.share({ title: 'Qahwah: The Last Drop', text: text, url: window.location.href });
+        } else {
+          navigator.clipboard.writeText(text);
+          alert("Score copied to clipboard!");
+        }
+      }
+    };
+
+    // Start engines
+    window.onload = function () {
+      Game.init();
+    };
+
+  </script>
+</body>
+
+</html>
