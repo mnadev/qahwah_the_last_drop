@@ -225,6 +225,17 @@
       pot: { x: 0, velocity: 0, width: 60, height: 90 },
       particles: [], // For spill effect
 
+      // Fun Facts
+      funFacts: [
+        "Yemen is the world's first cultivator of coffee, dating back to the 15th century.",
+        "The word 'Mocha' comes from the Yemeni port city of Al-Makha.",
+        "Traditional Yemeni coffee is often brewed with cardamom and ginger.",
+        "Qishr is a popular Yemeni drink made from coffee husks.",
+        "Yemeni coffee is grown on high-altitude mountain terraces.",
+        "Sufi monks in Yemen were the first to brew coffee to stay awake for prayers."
+      ],
+      currentFunFact: "",
+
       init: function () {
         // Handle High DPI
         this.dpr = window.devicePixelRatio || 1;
@@ -295,6 +306,23 @@
         this.state = 'GAMEOVER';
         document.getElementById('game-over-screen').classList.remove('hidden');
         document.getElementById('final-time').innerText = this.elapsedTime;
+
+        // Select and display random fun fact
+        this.currentFunFact = this.funFacts[Math.floor(Math.random() * this.funFacts.length)];
+
+        // Create or update fun fact element
+        let factElement = document.getElementById('fun-fact-display');
+        if (!factElement) {
+          factElement = document.createElement('p');
+          factElement.id = 'fun-fact-display';
+          factElement.style.color = '#FFD700';
+          factElement.style.fontStyle = 'italic';
+          factElement.style.marginTop = '20px';
+          const gameOverScreen = document.getElementById('game-over-screen');
+          // Insert before the buttons
+          gameOverScreen.insertBefore(factElement, gameOverScreen.getElementsByTagName('button')[0]);
+        }
+        factElement.innerText = "Did you know? " + this.currentFunFact;
       },
 
       loop: function () {
@@ -319,19 +347,18 @@
         // Intensity ramps up over 60 seconds
         this.intensity = Math.min(1.0, (now - this.startTime) / 60000);
 
-        // 2. Physics (Mountain Road Bumps)
+        // 2. Physics (Smoothed out)
         const t = now / 1000;
-        // Noise function for ground shake
-        const shake = Math.sin(t * 5) + Math.sin(t * 11) * 0.5;
-        // Occasional "Jolt" (Pothole)
-        const jolt = (Math.random() < 0.01) ? (Math.random() - 0.5) * 4 : 0;
+        // Reduced noise for smoother feel
+        const shake = Math.sin(t * 3) * 0.3;
+        // Removed the random "jolt" as it felt like a bug/jitter
 
-        const groundTilt = (shake * 0.2 + jolt) * (0.2 + this.intensity * 1.5);
+        const groundTilt = shake * (0.05 + this.intensity * 0.2);
 
         // 3. Tray Physics
-        // We lag the tray angle slightly behind input for "weight" feel
+        // Smoother lerp for weight feel
         const targetAngle = this.inputAngle + groundTilt;
-        this.trayAngle += (targetAngle - this.trayAngle) * 0.1;
+        this.trayAngle += (targetAngle - this.trayAngle) * 0.05; // Reduced from 0.1 for more weight/smoothness
 
         // 4. Pot Physics
         // Gravity pulling pot down slope
@@ -538,12 +565,12 @@
       },
 
       share: function () {
-        const text = `I saved the Qahwah for ${this.elapsedTime} seconds! ☕🇾🇪 Can you protect the last drop?`;
+        const text = `I saved the Qahwah for ${this.elapsedTime} seconds! ☕🇾🇪\n\nDid you know? ${this.currentFunFact}\n\nFind Yemeni coffee at Haraz Coffee House`;
         if (navigator.share) {
           navigator.share({ title: 'Qahwah: The Last Drop', text: text, url: window.location.href });
         } else {
           navigator.clipboard.writeText(text);
-          alert("Score copied to clipboard!");
+          alert("Score and fun fact copied to clipboard!");
         }
       }
     };
