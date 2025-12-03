@@ -224,6 +224,8 @@
       // Objects
       pot: { x: 0, velocity: 0, width: 60, height: 90 },
       particles: [], // For spill effect
+      drops: [], // Falling items
+      highScore: 0,
 
       // Input State
       isTouching: false,
@@ -244,6 +246,13 @@
         this.dpr = window.devicePixelRatio || 1;
         this.resize();
         window.addEventListener('resize', () => this.resize());
+
+        // Load High Score
+        const savedScore = localStorage.getItem('qahwah_highscore');
+        if (savedScore) {
+          this.highScore = parseFloat(savedScore);
+        }
+        this.updateHighScoreDisplay();
 
         // Mouse Input
         window.addEventListener('mousemove', e => this.handleInput(e.clientX));
@@ -299,6 +308,7 @@
         this.startTime = Date.now();
         this.coffeeLevel = 100;
         this.particles = [];
+        this.drops = [];
         this.pot.x = 0;
         this.pot.velocity = 0;
         this.inputAngle = 0;
@@ -323,6 +333,13 @@
         const gameOverScreen = document.getElementById('game-over-screen');
         gameOverScreen.classList.remove('hidden');
         document.getElementById('final-time').innerText = this.elapsedTime;
+
+        // Check High Score
+        if (parseFloat(this.elapsedTime) > this.highScore) {
+          this.highScore = parseFloat(this.elapsedTime);
+          localStorage.setItem('qahwah_highscore', this.highScore);
+        }
+        this.updateHighScoreDisplay();
 
         // Select and display random fun fact
         this.currentFunFact = this.funFacts[Math.floor(Math.random() * this.funFacts.length)];
@@ -373,7 +390,9 @@
         document.getElementById('score-display').innerText = this.elapsedTime + "s";
 
         // Intensity ramps up over 60 seconds
-        this.intensity = Math.min(1.0, (now - this.startTime) / 60000);
+        // Non-linear ramp: starts slow, gets crazy
+        const timeFactor = (now - this.startTime) / 60000;
+        this.intensity = Math.min(1.0, Math.pow(timeFactor, 1.5)); // x^1.5 for slower start
 
         // 2. Physics (Smoothed out)
         const t = now / 1000;
@@ -451,6 +470,63 @@
           p.life--;
           if (p.life <= 0) this.particles.splice(i, 1);
         }
+
+        // 6. Drops Logic
+        // Spawn drops based on intensity
+        // Base chance 0.5% per frame, increases to 2% at max intensity
+        if (Math.random() < 0.005 + (this.intensity * 0.015)) {
+          this.spawnDrop();
+        }
+
+        for (let i = this.drops.length - 1; i >= 0; i--) {
+          let d = this.drops[i];
+          d.y += d.speed * (1 + this.intensity); // Drops fall faster with intensity
+          d.rotation += d.rotSpeed;
+
+          // Collision with Pot
+          // Simple box/circle check
+          // Pot is at this.pot.x, y is roughly -35 (bulb center) relative to tray center
+          // But drops are in screen coordinates? No, let's keep drops in "Tray Space" or "Screen Space"?
+          // Let's use Screen Space for drops to make them fall straight down regardless of tray tilt?
+          // Actually, "falling from sky" implies screen space.
+          // But the pot is moving in tray space. We need to convert.
+
+          // Let's keep it simple: Drops are in Screen Space (relative to center).
+          // Pot X in screen space is roughly: pot.x * cos(trayAngle)
+          // Pot Y in screen space is roughly: pot.x * sin(trayAngle) + tray_offset_y
+
+          // Actually, let's just do simple distance check assuming small angles
+          // Pot Screen X ~= this.pot.x
+          // Pot Screen Y ~= 100 (tray offset) - 35 (pot center) = 65
+
+          const potScreenX = this.pot.x; // Simplified
+          const potScreenY = 65;
+
+          const dx = d.x - potScreenX;
+          const dy = d.y - potScreenY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 50) { // Hit!
+            if (d.type === 'GOOD') {
+              this.coffeeLevel = Math.min(100, this.coffeeLevel + 15);
+              // Visual feedback
+              for (let k = 0; k < 5; k++) this.spawnParticle(this.pot.x, -40);
+            } else {
+              this.coffeeLevel = Math.max(0, this.coffeeLevel - 20);
+              // Visual feedback (Red particles)
+              // We'll just use the existing particle system but maybe add color support later
+              // For now, just spill effect
+              for (let k = 0; k < 5; k++) this.spawnParticle(this.pot.x, -40);
+            }
+            this.drops.splice(i, 1);
+            continue;
+          }
+
+          // Remove if off screen
+          if (d.y > this.height / 2 + 200) {
+            this.drops.splice(i, 1);
+          }
+        }
       },
 
       spawnParticle: function (x, y) {
@@ -462,6 +538,45 @@
           life: 40,
           size: Math.random() * 4 + 2
         });
+      },
+
+      spawnDrop: function () {
+        // x range: -width/2 to width/2
+        const x = (Math.random() - 0.5) * (this.width * 0.8);
+        const type = Math.random() > 0.7 ? 'BAD' : 'GOOD'; // 30% bad drops
+        this.drops.push({
+          x: x,
+          y: -this.height / 2 - 50, // Start above screen
+          speed: Math.random() * 2 + 3,
+          type: type,
+          rotation: Math.random() * Math.PI,
+          rotSpeed: (Math.random() - 0.5) * 0.1
+        });
+      },
+
+      updateHighScoreDisplay: function () {
+        // Update Start Screen
+        let startScore = document.getElementById('start-high-score');
+        if (!startScore) {
+          startScore = document.createElement('p');
+          startScore.id = 'start-high-score';
+          startScore.style.color = '#FFD700';
+          startScore.style.fontWeight = 'bold';
+          const btn = document.querySelector('#start-screen button');
+          if (btn) btn.parentNode.insertBefore(startScore, btn);
+        }
+        startScore.innerText = `Best: ${this.highScore.toFixed(2)}s`;
+
+        // Update Game Over Screen
+        let endScore = document.getElementById('end-high-score');
+        if (!endScore) {
+          endScore = document.createElement('p');
+          endScore.id = 'end-high-score';
+          endScore.style.color = '#FFD700';
+          const btn = document.querySelector('#game-over-screen button');
+          if (btn) btn.parentNode.insertBefore(endScore, btn);
+        }
+        endScore.innerText = `Best: ${this.highScore.toFixed(2)}s`;
       },
 
       draw: function () {
@@ -501,6 +616,46 @@
         ctx.lineTo(w, h);
         ctx.lineTo(-w, h);
         ctx.fill();
+        ctx.restore();
+
+        // --- Drops (Screen Space) ---
+        // We draw them before the tray so they look like they are in the background/midground
+        // or after? Let's draw them after background but before tray.
+        ctx.save();
+        ctx.translate(w / 2, h / 2); // Center origin
+
+        for (let d of this.drops) {
+          ctx.save();
+          ctx.translate(d.x, d.y);
+          ctx.rotate(d.rotation);
+
+          if (d.type === 'GOOD') {
+            // Draw Coffee Bean
+            ctx.fillStyle = '#6D4C41';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 10, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#3E2723';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -12);
+            ctx.quadraticCurveTo(5, 0, 0, 12);
+            ctx.stroke();
+          } else {
+            // Draw Bad Drop (Rock? Bug? Just a red blob?)
+            // Let's make it a jagged rock
+            ctx.fillStyle = '#546E7A';
+            ctx.beginPath();
+            ctx.moveTo(-10, -10);
+            ctx.lineTo(5, -15);
+            ctx.lineTo(12, 0);
+            ctx.lineTo(0, 12);
+            ctx.lineTo(-12, 5);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.restore();
+        }
         ctx.restore();
 
         // --- The Tray ---
