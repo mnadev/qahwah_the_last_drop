@@ -628,7 +628,7 @@
         // Let's remove stars for the clean look
 
         // Mountains
-        ctx.fillStyle = '#000000'; // Black Silhouette
+        ctx.fillStyle = '#757575'; // Grey Silhouette for contrast against black tray
         ctx.beginPath();
         ctx.moveTo(-w, h * 0.1);
         ctx.lineTo(-w * 0.4, -h * 0.1);
@@ -687,9 +687,12 @@
         const trayW = Math.min(600, w * 0.85);
         const safeW = 120; // Width of safe zone
 
-        // Tray Body (Black)
+        // Tray Body (Black with Gold Border)
         ctx.fillStyle = '#000000';
         ctx.fillRect(-trayW / 2, -5, trayW, 15);
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-trayW / 2, -5, trayW, 15);
 
         // Safe Zone Marker (Center)
         // If sliding out, turn red, else gold
