@@ -11,8 +11,8 @@
     body {
       margin: 0;
       overflow: hidden;
-      background-color: #3E2723;
-      font-family: 'Lato', sans-serif;
+      background-color: #050505;
+      font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
@@ -49,9 +49,10 @@
       margin-top: 20px;
       width: 300px;
       height: 30px;
-      background: rgba(0, 0, 0, 0.5);
-      border: 3px solid #8D6E63;
-      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid #FFD700;
+      border-radius: 0px;
+      /* Sharp edges for fashion look */
       position: relative;
       overflow: hidden;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
@@ -60,7 +61,7 @@
     #meter-fill {
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, #6D4C41, #8D6E63);
+      background: #FFD700;
       transform-origin: left;
       transition: width 0.1s linear;
     }
@@ -78,11 +79,12 @@
     }
 
     #score-display {
-      font-family: 'Cinzel', serif;
+      font-family: 'Bernhardt Fashion BT', 'Didot', 'Bodoni MT', 'Cinzel', serif;
       font-size: 2rem;
       color: #FFD700;
       text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
       margin-top: 10px;
+      letter-spacing: 2px;
     }
 
     /* Screens */
@@ -92,7 +94,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(30, 20, 15, 0.95);
+      background: rgba(5, 5, 5, 0.95);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -111,34 +113,43 @@
     }
 
     h1 {
-      font-family: 'Cinzel', serif;
+      font-family: 'Bernhardt Fashion BT', 'Didot', 'Bodoni MT', 'Cinzel', serif;
       color: #FFD700;
-      font-size: 2.5rem;
+      font-size: 3rem;
       margin: 0 0 10px 0;
-      text-shadow: 0 0 20px #E65100;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+      font-weight: normal;
+      letter-spacing: 3px;
+      text-transform: uppercase;
     }
 
     p {
-      color: #F5DEB3;
+      color: #FFFFFF;
       font-size: 1.1rem;
       max-width: 600px;
       line-height: 1.6;
+      font-weight: 300;
     }
 
     button {
-      background: linear-gradient(#E65100, #BF360C);
-      border: 2px solid #FFD700;
-      color: white;
+      background: #000;
+      border: 1px solid #FFD700;
+      color: #FFD700;
       padding: 15px 40px;
       font-size: 1.2rem;
-      font-family: 'Cinzel', serif;
+      font-family: 'Bernhardt Fashion BT', 'Didot', 'Bodoni MT', 'Cinzel', serif;
       margin-top: 30px;
       cursor: pointer;
-      border-radius: 50px;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
-      transition: transform 0.1s;
+      border-radius: 0;
+      box-shadow: 0 5px 15px rgba(255, 215, 0, 0.1);
+      transition: all 0.2s;
       text-transform: uppercase;
-      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    button:hover {
+      background: #FFD700;
+      color: #000;
     }
 
     button:active {
@@ -147,11 +158,19 @@
 
     .secondary-btn {
       background: transparent;
-      border: 2px solid #8D6E63;
-      color: #8D6E63;
+      border: 1px solid #666;
+      color: #888;
       margin-top: 15px;
-      font-size: 1rem;
+      font-size: 0.9rem;
       padding: 10px 30px;
+      font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .secondary-btn:hover {
+      border-color: #FFD700;
+      color: #FFD700;
+      background: transparent;
     }
 
     .tutorial-icon {
@@ -192,7 +211,7 @@
 
     <!-- Game Over Screen -->
     <div id="game-over-screen" class="screen hidden">
-      <h1 style="color:#BCAAA4">NOT A DROP LEFT!</h1>
+      <h1 style="color:#FFF">NOT A DROP LEFT</h1>
       <p>You saved the Qahwah for:</p>
       <h2 id="final-time" style="font-size: 3.5rem; color: #fff; margin: 10px 0;">0.00</h2>
       <p>seconds</p>
@@ -441,9 +460,9 @@
         // UI Update
         document.getElementById('meter-fill').style.width = this.coffeeLevel + '%';
         if (this.coffeeLevel < 30) {
-          document.getElementById('meter-fill').style.backgroundColor = '#FF5252';
+          document.getElementById('meter-fill').style.backgroundColor = '#FF0000'; // Stark Red
         } else {
-          document.getElementById('meter-fill').style.backgroundColor = '#6D4C41';
+          document.getElementById('meter-fill').style.backgroundColor = '#FFD700'; // Gold
         }
 
         // Check Game Over
@@ -594,19 +613,16 @@
 
         // Sky
         const grad = ctx.createLinearGradient(0, -h, 0, h);
-        grad.addColorStop(0, '#1a237e');
-        grad.addColorStop(1, '#4a148c');
+        grad.addColorStop(0, '#F5F5F5'); // White/Grey
+        grad.addColorStop(1, '#BDBDBD');
         ctx.fillStyle = grad;
         ctx.fillRect(-w, -h, w * 2, h * 2);
 
-        // Stars
-        ctx.fillStyle = '#FFF';
-        for (let i = 0; i < 10; i++) {
-          ctx.beginPath(); // Simple stars logic would go here, skipping for perf
-        }
+        // Stars (Hidden in day/white theme, or maybe black specks?)
+        // Let's remove stars for the clean look
 
         // Mountains
-        ctx.fillStyle = '#151515';
+        ctx.fillStyle = '#000000'; // Black Silhouette
         ctx.beginPath();
         ctx.moveTo(-w, h * 0.1);
         ctx.lineTo(-w * 0.4, -h * 0.1);
@@ -630,21 +646,20 @@
           ctx.rotate(d.rotation);
 
           if (d.type === 'GOOD') {
-            // Draw Coffee Bean
-            ctx.fillStyle = '#6D4C41';
+            // Draw Coffee Bean (Gold)
+            ctx.fillStyle = '#FFD700';
             ctx.beginPath();
             ctx.ellipse(0, 0, 10, 15, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = '#3E2723';
+            ctx.strokeStyle = '#B8860B'; // Darker Gold
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(0, -12);
             ctx.quadraticCurveTo(5, 0, 0, 12);
             ctx.stroke();
           } else {
-            // Draw Bad Drop (Rock? Bug? Just a red blob?)
-            // Let's make it a jagged rock
-            ctx.fillStyle = '#546E7A';
+            // Draw Bad Drop (Black Rock)
+            ctx.fillStyle = '#000000';
             ctx.beginPath();
             ctx.moveTo(-10, -10);
             ctx.lineTo(5, -15);
@@ -666,17 +681,17 @@
         const trayW = Math.min(600, w * 0.85);
         const safeW = 120; // Width of safe zone
 
-        // Tray Body
-        ctx.fillStyle = '#8D6E63';
+        // Tray Body (Black)
+        ctx.fillStyle = '#000000';
         ctx.fillRect(-trayW / 2, -5, trayW, 15);
 
         // Safe Zone Marker (Center)
         // If sliding out, turn red, else gold
         const isSafe = Math.abs(this.pot.x) <= 70; // 60 + buffer
-        ctx.fillStyle = isSafe ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 0, 0, 0.2)';
+        ctx.fillStyle = isSafe ? 'rgba(255, 215, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
         ctx.fillRect(-safeW / 2, -15, safeW, 25);
 
-        ctx.strokeStyle = isSafe ? '#FFD700' : '#FF5252';
+        ctx.strokeStyle = isSafe ? '#FFD700' : '#FF0000';
         ctx.lineWidth = 2;
         ctx.strokeRect(-safeW / 2, -15, safeW, 25);
 
@@ -684,7 +699,7 @@
         ctx.translate(this.pot.x, -5);
 
         // Draw Particles (Behind pot)
-        ctx.fillStyle = '#4E342E'; // Liquid color
+        ctx.fillStyle = '#000000'; // Liquid color (Black Coffee)
         for (let p of this.particles) {
           ctx.beginPath();
           ctx.arc(p.x - this.pot.x, p.y, p.size, 0, Math.PI * 2);
@@ -692,7 +707,7 @@
         }
 
         // Pot Style
-        const potColor = '#FFC107';
+        const potColor = '#FFD700'; // Gold
 
         // Pot Fluid Level (Visual)
         // We mask the fluid inside the pot shape
@@ -706,14 +721,14 @@
         ctx.clip(); // Restrict drawing to inside pot
 
         // Pot Background (Inside)
-        ctx.fillStyle = '#FDD835';
+        ctx.fillStyle = '#FDD835'; // Lighter Gold
         ctx.fill();
 
         // Coffee Liquid
         const liquidH = 100 * (this.coffeeLevel / 100); // 0 to 100
         const liquidY = -90 + (100 - liquidH); // Top down
 
-        ctx.fillStyle = '#3E2723'; // Dark Coffee
+        ctx.fillStyle = '#000000'; // Black Coffee
 
         // Sloshing Liquid Angle (opposes acceleration/tilt)
         ctx.rotate(-this.trayAngle * 1.5);
@@ -722,7 +737,7 @@
         ctx.restore(); // End clipping
 
         // Draw Pot Outline (Over liquid)
-        ctx.strokeStyle = '#F9A825';
+        ctx.strokeStyle = '#000000'; // Black Outline
         ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.arc(0, -35, 35, 0, Math.PI * 2);
@@ -736,6 +751,7 @@
         ctx.quadraticCurveTo(50, -60, 40, -80);
         ctx.lineTo(30, -70);
         ctx.fill();
+        ctx.stroke(); // Add outline to spout
 
         // Lid
         ctx.beginPath();
@@ -743,6 +759,7 @@
         ctx.lineTo(0, -115);
         ctx.lineTo(18, -90);
         ctx.fill();
+        ctx.stroke(); // Add outline to lid
 
         ctx.restore();
       },
