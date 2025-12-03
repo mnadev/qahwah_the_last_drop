@@ -262,7 +262,8 @@
         "Adeni Chai is a rich, spiced tea with milk, similar to Karak Chai, reflecting Yemen's trade history with India.",
         "While coffee was discovered in Ethiopia, it was first cultivated and traded globally from Yemen.",
         "The world's first coffee houses, or 'kaveh kanes', appeared in Yemen in the 15th century.",
-        "Sufi monks in Yemen were the first to brew coffee to stay awake for prayers."
+        "Sufi monks in Yemen were the first to brew coffee to stay awake for prayers.",
+        "Old Sana'a is famous for its unique gingerbread-style tower houses, considered the world's first skyscrapers."
       ],
       currentFunFact: "",
 
@@ -627,17 +628,45 @@
         // Stars (Hidden in day/white theme, or maybe black specks?)
         // Let's remove stars for the clean look
 
-        // Mountains
-        ctx.fillStyle = '#757575'; // Grey Silhouette for contrast against black tray
+        // Sana'a Skyline (Skyscrapers)
+        ctx.fillStyle = '#212121'; // Dark Grey for buildings
         ctx.beginPath();
-        ctx.moveTo(-w, h * 0.1);
-        ctx.lineTo(-w * 0.4, -h * 0.1);
-        ctx.lineTo(0, h * 0.2);
-        ctx.lineTo(w * 0.4, 0);
-        ctx.lineTo(w, h * 0.2);
-        ctx.lineTo(w, h);
-        ctx.lineTo(-w, h);
+
+        // Simple blocky skyline
+        const groundY = h * 0.2;
+        ctx.moveTo(-w, h); // Bottom Left
+        ctx.lineTo(-w, groundY); // Start of skyline
+
+        // Draw random-looking buildings (deterministic based on loop)
+        const buildingWidth = 40;
+        const numBuildings = (w * 2) / buildingWidth;
+
+        for (let i = 0; i < numBuildings; i++) {
+          const x = -w + i * buildingWidth;
+          // Pseudo-random height based on index
+          const height = 50 + Math.abs(Math.sin(i * 132.1)) * 150;
+          ctx.lineTo(x, groundY - height);
+          ctx.lineTo(x + buildingWidth, groundY - height);
+          // Add little "windows" or decoration? Maybe too detailed for now.
+        }
+
+        ctx.lineTo(w, groundY);
+        ctx.lineTo(w, h); // Bottom Right
         ctx.fill();
+
+        // Add white windows for detail
+        ctx.fillStyle = '#FFFFFF';
+        for (let i = 0; i < numBuildings; i++) {
+          if (i % 2 === 0) continue; // Skip some
+          const x = -w + i * buildingWidth;
+          const height = 50 + Math.abs(Math.sin(i * 132.1)) * 150;
+          // Draw a few windows
+          for (let j = 0; j < 3; j++) {
+            ctx.fillRect(x + 10, groundY - height + 20 + (j * 30), 5, 10);
+            ctx.fillRect(x + 25, groundY - height + 20 + (j * 30), 5, 10);
+          }
+        }
+
         ctx.restore();
 
         // --- Drops (Screen Space) ---
@@ -652,12 +681,12 @@
           ctx.rotate(d.rotation);
 
           if (d.type === 'GOOD') {
-            // Draw Coffee Bean (Gold)
-            ctx.fillStyle = '#FFD700';
+            // Draw Coffee Bean (Brown)
+            ctx.fillStyle = '#6D4C41';
             ctx.beginPath();
             ctx.ellipse(0, 0, 10, 15, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = '#B8860B'; // Darker Gold
+            ctx.strokeStyle = '#3E2723'; // Darker Brown
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(0, -12);
