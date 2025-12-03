@@ -294,14 +294,8 @@
           this.handleInput(e.touches[0].clientX);
         }, { passive: false });
 
-        // Gyro (Optional)
-        window.addEventListener('deviceorientation', e => {
-          // Only use gyro if not currently touching the screen
-          if (e.gamma && this.state === 'PLAYING' && !this.isTouching) {
-            let tilt = Math.max(-45, Math.min(45, e.gamma));
-            this.inputAngle = tilt * (Math.PI / 180);
-          }
-        });
+        // Gyro Removed as per request
+        // window.addEventListener('deviceorientation', e => { ... });
 
         // Start the render loop immediately (for background)
         this.loop();
