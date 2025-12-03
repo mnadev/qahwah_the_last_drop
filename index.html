@@ -225,6 +225,9 @@
       pot: { x: 0, velocity: 0, width: 60, height: 90 },
       particles: [], // For spill effect
 
+      // Input State
+      isTouching: false,
+
       // Fun Facts
       funFacts: [
         "Yemen is the world's first cultivator of coffee, dating back to the 15th century.",
@@ -246,14 +249,20 @@
         window.addEventListener('mousemove', e => this.handleInput(e.clientX));
 
         // Touch Input
+        window.addEventListener('touchstart', () => { this.isTouching = true; }, { passive: false });
+        window.addEventListener('touchend', () => { this.isTouching = false; }, { passive: false });
+        window.addEventListener('touchcancel', () => { this.isTouching = false; }, { passive: false });
+
         window.addEventListener('touchmove', e => {
           e.preventDefault();
+          this.isTouching = true;
           this.handleInput(e.touches[0].clientX);
         }, { passive: false });
 
         // Gyro (Optional)
         window.addEventListener('deviceorientation', e => {
-          if (e.gamma && this.state === 'PLAYING') {
+          // Only use gyro if not currently touching the screen
+          if (e.gamma && this.state === 'PLAYING' && !this.isTouching) {
             let tilt = Math.max(-45, Math.min(45, e.gamma));
             this.inputAngle = tilt * (Math.PI / 180);
           }
@@ -294,35 +303,54 @@
         this.pot.velocity = 0;
         this.inputAngle = 0;
         this.intensity = 0;
+        this.isTouching = false;
 
         // UI Reset
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-over-screen').classList.add('hidden');
         document.getElementById('meter-fill').style.width = '100%';
         document.getElementById('score-display').innerText = "0.00s";
+
+        // Remove dynamic elements
+        const fact = document.getElementById('fun-fact-display');
+        if (fact) fact.remove();
+        const link = document.getElementById('haraz-link');
+        if (link) link.remove();
       },
 
       gameOver: function () {
         this.state = 'GAMEOVER';
-        document.getElementById('game-over-screen').classList.remove('hidden');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        gameOverScreen.classList.remove('hidden');
         document.getElementById('final-time').innerText = this.elapsedTime;
 
         // Select and display random fun fact
         this.currentFunFact = this.funFacts[Math.floor(Math.random() * this.funFacts.length)];
 
-        // Create or update fun fact element
-        let factElement = document.getElementById('fun-fact-display');
-        if (!factElement) {
-          factElement = document.createElement('p');
-          factElement.id = 'fun-fact-display';
-          factElement.style.color = '#FFD700';
-          factElement.style.fontStyle = 'italic';
-          factElement.style.marginTop = '20px';
-          const gameOverScreen = document.getElementById('game-over-screen');
-          // Insert before the buttons
-          gameOverScreen.insertBefore(factElement, gameOverScreen.getElementsByTagName('button')[0]);
-        }
+        // Create fun fact element
+        let factElement = document.createElement('p');
+        factElement.id = 'fun-fact-display';
+        factElement.style.color = '#FFD700';
+        factElement.style.fontStyle = 'italic';
+        factElement.style.marginTop = '20px';
         factElement.innerText = "Did you know? " + this.currentFunFact;
+
+        // Create Link Element
+        let linkElement = document.createElement('a');
+        linkElement.id = 'haraz-link';
+        linkElement.href = 'https://www.harazcoffeehouse.com';
+        linkElement.target = '_blank';
+        linkElement.style.color = '#E65100';
+        linkElement.style.display = 'block';
+        linkElement.style.marginTop = '15px';
+        linkElement.style.textDecoration = 'underline';
+        linkElement.style.fontWeight = 'bold';
+        linkElement.innerText = "Visit Haraz Coffee House";
+
+        // Insert before the buttons
+        const firstButton = gameOverScreen.getElementsByTagName('button')[0];
+        gameOverScreen.insertBefore(factElement, firstButton);
+        gameOverScreen.insertBefore(linkElement, firstButton);
       },
 
       loop: function () {
@@ -565,7 +593,7 @@
       },
 
       share: function () {
-        const text = `I saved the Qahwah for ${this.elapsedTime} seconds! ☕🇾🇪\n\nDid you know? ${this.currentFunFact}\n\nFind Yemeni coffee at Haraz Coffee House`;
+        const text = `I saved the Qahwah for ${this.elapsedTime} seconds! ☕🇾🇪\n\nDid you know? ${this.currentFunFact}\n\nFind Yemeni coffee at https://www.harazcoffeehouse.com`;
         if (navigator.share) {
           navigator.share({ title: 'Qahwah: The Last Drop', text: text, url: window.location.href });
         } else {
